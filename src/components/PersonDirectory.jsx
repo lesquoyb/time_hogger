@@ -17,7 +17,21 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTimerManager } from '../hooks/useTimerManager';
 
 export default function PersonDirectory() {
-  const [persons, setPersons] = useLocalStorage('timehogger-persons', defaultPersons);
+  const [persons, setPersons, {
+    isLoading,
+    error,
+    lastSyncTime,
+    isServerAvailable,
+    manualSync,
+    createBackup,
+    loadFromServer,
+    checkServerAvailability
+  }] = useLocalStorage('timehogger_persons', defaultPersons, { 
+    syncWithServer: true,
+    autoSave: true,
+    debounceMs: 2000
+  });
+  
   const [view, setView] = useState('grid'); // 'grid' or 'stats'
   const [searchTerm, setSearchTerm] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -27,6 +41,7 @@ export default function PersonDirectory() {
   const [userForSessionEdit, setUserForSessionEdit] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
   const { notifications, addNotification, removeNotification } = useNotifications();
 
   // Function to force display refresh
@@ -36,6 +51,55 @@ export default function PersonDirectory() {
 
   // Display refresh manager
   const { getActiveTimersCount } = useTimerManager(persons, handleRefresh);
+
+  // Sync functions
+  const handleManualSync = async () => {
+    setSyncStatus('syncing');
+    try {
+      const success = await manualSync();
+      if (success) {
+        setSyncStatus('success');
+        addNotification('Data synced to server successfully', 'success');
+      } else {
+        setSyncStatus('error');
+        addNotification('Failed to sync data to server', 'error');
+      }
+    } catch (error) {
+      setSyncStatus('error');
+      addNotification(`Sync failed: ${error.message}`, 'error');
+    }
+    
+    // Reset status after delay
+    setTimeout(() => setSyncStatus('idle'), 3000);
+  };
+
+  const handleCreateBackup = async () => {
+    try {
+      const result = await createBackup();
+      if (result) {
+        addNotification(`Backup created: ${result.filename}`, 'success');
+      } else {
+        addNotification('Failed to create backup', 'error');
+      }
+    } catch (error) {
+      addNotification(`Backup failed: ${error.message}`, 'error');
+    }
+  };
+
+  const handleLoadFromServer = async () => {
+    setSyncStatus('syncing');
+    try {
+      await loadFromServer();
+      setSyncStatus('success');
+      addNotification('Data loaded from server', 'success');
+    } catch (error) {
+      setSyncStatus('error');
+      addNotification(`Load failed: ${error.message}`, 'error');
+    }
+    
+    // Reset status after delay
+    setTimeout(() => setSyncStatus('idle'), 3000);
+  };
 
   // Toggle a person's timer
   const handleToggleTimer = useCallback((personId) => {
@@ -307,6 +371,31 @@ export default function PersonDirectory() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showExportMenu]);
 
+  // Display sync status
+  useEffect(() => {
+    if (error) {
+      addNotification(`Server error: ${error}`, 'error');
+    }
+  }, [error, addNotification]);
+
+  // Debug: Log API configuration on mount
+  useEffect(() => {
+    const debugApiConfig = async () => {
+      const apiService = (await import('../services/apiService')).default;
+      const result = await apiService.testConnection();
+      
+      if (result.success) {
+        console.log('🌐 API connected successfully');
+      } else {
+        console.warn('⚠️ API connection failed, running in offline mode');
+      }
+    };
+    
+    if (import.meta.env.DEV) {
+      debugApiConfig();
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -328,6 +417,65 @@ export default function PersonDirectory() {
 
             {/* Navigation */}
             <div className="flex items-center space-x-4">
+              {/* Sync Status Indicator */}
+              {isServerAvailable && (
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
+                    {isLoading ? (
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                    ) : syncStatus === 'syncing' ? (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
+                    ) : syncStatus === 'success' ? (
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    ) : syncStatus === 'error' ? (
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    ) : isServerAvailable ? (
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    ) : (
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    )}
+                    <span className="text-xs text-gray-500">
+                      {isLoading ? 'Loading...' 
+                       : syncStatus === 'syncing' ? 'Syncing...'
+                       : syncStatus === 'success' ? 'Synced'
+                       : syncStatus === 'error' ? 'Error'
+                       : isServerAvailable ? 'Server' 
+                       : 'Offline'}
+                    </span>
+                  </div>
+                  
+                  {/* Sync Controls */}
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={handleManualSync}
+                      disabled={syncStatus === 'syncing'}
+                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                      title="Manual sync to server"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={handleCreateBackup}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      title="Create backup"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {lastSyncTime && (
+                    <span className="text-xs text-gray-400" title={`Last sync: ${new Date(lastSyncTime).toLocaleString()}`}>
+                      {new Date(lastSyncTime).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-4">
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setView('grid')}
@@ -350,6 +498,7 @@ export default function PersonDirectory() {
                   Statistics
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </div>

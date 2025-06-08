@@ -1,0 +1,42 @@
+{
+  "persons": [
+    {
+      "id": 1,
+      "name": "Alice Martin",
+      "avatar": "👩‍💼",
+      "avatarType": "emoji",
+      "color": "#3B82F6",
+      "sessions": [],
+      "currentSessionStart": null,
+      "isRunning": false
+    },
+    {
+      "id": 2,
+      "name": "Bob Smith",
+      "avatar": "👨‍💻",
+      "avatarType": "emoji",
+      "color": "#10B981",
+      "sessions": [
+        {
+          "id": 1749394940896,
+          "start": 1749393627952,
+          "end": 1749394940896,
+          "duration": 1312
+        }
+      ],
+      "currentSessionStart": null,
+      "isRunning": false
+    },
+    {
+      "id": 3,
+      "name": "Claire Johnson",
+      "avatar": "👩‍🎨",
+      "avatarType": "emoji",
+      "color": "#8B5CF6",
+      "sessions": [],
+      "currentSessionStart": null,
+      "isRunning": false
+    }
+  ],
+  "lastUpdated": "2025-06-08T15:02:28.348Z"
+}
