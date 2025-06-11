@@ -416,64 +416,71 @@ export default function PersonDirectory() {
             </div>
 
             {/* Navigation */}
-            <div className="flex items-center space-x-4">
-              {/* Sync Status Indicator */}
-              {isServerAvailable && (
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-1">
-                    {isLoading ? (
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                    ) : syncStatus === 'syncing' ? (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
-                    ) : syncStatus === 'success' ? (
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    ) : syncStatus === 'error' ? (
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    ) : isServerAvailable ? (
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    ) : (
-                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    )}
-                    <span className="text-xs text-gray-500">
-                      {isLoading ? 'Loading...' 
-                       : syncStatus === 'syncing' ? 'Syncing...'
-                       : syncStatus === 'success' ? 'Synced'
-                       : syncStatus === 'error' ? 'Error'
-                       : isServerAvailable ? 'Server' 
-                       : 'Offline'}
-                    </span>
-                  </div>
-                  
-                  {/* Sync Controls */}
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={handleManualSync}
-                      disabled={syncStatus === 'syncing'}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                      title="Manual sync to server"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={handleCreateBackup}
-                      className="p-1 text-gray-400 hover:text-gray-600"
-                      title="Create backup"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  {lastSyncTime && (
-                    <span className="text-xs text-gray-400" title={`Last sync: ${new Date(lastSyncTime).toLocaleString()}`}>
-                      {new Date(lastSyncTime).toLocaleTimeString()}
-                    </span>
+            <div className="flex items-center space-x-4">              {/* Sync Status Indicator */}
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
+                  {isLoading ? (
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                  ) : syncStatus === 'syncing' ? (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
+                  ) : syncStatus === 'success' ? (
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  ) : syncStatus === 'error' ? (
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  ) : isServerAvailable ? (
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  ) : (
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                   )}
+                  <span className="text-xs text-gray-500">
+                    {isLoading ? 'Loading...' 
+                     : syncStatus === 'syncing' ? 'Syncing...'
+                     : syncStatus === 'success' ? 'Synced'
+                     : syncStatus === 'error' ? 'Error'
+                     : isServerAvailable ? 'Server' 
+                     : 'Offline'}
+                  </span>
                 </div>
-              )}
+                
+                {/* Sync Controls */}
+                <div className="flex space-x-1">
+                  <button
+                    onClick={handleManualSync}
+                    disabled={syncStatus === 'syncing' || !isServerAvailable}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                    title={isServerAvailable ? "Manual sync to server" : "Server unavailable"}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleCreateBackup}
+                    disabled={!isServerAvailable}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                    title={isServerAvailable ? "Create backup" : "Server unavailable"}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={checkServerAvailability}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                    title="Check server availability"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                </div>
+                
+                {lastSyncTime && (
+                  <span className="text-xs text-gray-400" title={`Last sync: ${new Date(lastSyncTime).toLocaleString()}`}>
+                    {new Date(lastSyncTime).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
               
               <div className="flex items-center space-x-4">              <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
