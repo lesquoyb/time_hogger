@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import TimerCard from './TimerCard';
 import Statistics from './Statistics';
+import TimelineChart from './TimelineChart';
 import Help from './Help';
 import NotificationContainer, { useNotifications } from './NotificationContainer';
 import UserEditModal from './UserEditModal';
@@ -31,8 +32,7 @@ export default function PersonDirectory() {
     autoSave: true,
     debounceMs: 2000
   });
-  
-  const [view, setView] = useState('grid'); // 'grid' or 'stats'
+    const [view, setView] = useState('grid'); // 'grid', 'stats', or 'timeline'
   const [searchTerm, setSearchTerm] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -475,8 +475,7 @@ export default function PersonDirectory() {
                 </div>
               )}
               
-              <div className="flex items-center space-x-4">
-              <div className="flex bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center space-x-4">              <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setView('grid')}
                   className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
@@ -496,6 +495,16 @@ export default function PersonDirectory() {
                   }`}
                 >
                   Statistics
+                </button>
+                <button
+                  onClick={() => setView('timeline')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    view === 'timeline'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  📈 Timeline
                 </button>
               </div>
             </div>
@@ -652,10 +661,12 @@ export default function PersonDirectory() {
                 </div>
               </>
             )}
-          </>
-        ) : (
+          </>        ) : view === 'stats' ? (
           /* Statistics view */
           <Statistics persons={persons} />
+        ) : (
+          /* Timeline view */
+          <TimelineChart persons={persons} />
         )}
       </main>
       
