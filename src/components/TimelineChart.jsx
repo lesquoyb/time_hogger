@@ -294,15 +294,35 @@ ChartJS.register(
 );
 
 export default function TimelineChart({ persons }) {
-  const [timeRange, setTimeRange] = useState('7d'); // '24h', '7d', '30d', 'all'
+  // Separate time ranges for each view type
+  const [timeRanges, setTimeRanges] = useState({
+    sessions: '7d',
+    cumulative: '7d', 
+    daily: '7d',
+    leaderboard: '7d'
+  });
   const [viewType, setViewType] = useState('sessions'); // 'sessions', 'cumulative', 'daily', 'leaderboard'
+
+  // Get current time range for active view
+  const timeRange = timeRanges[viewType];
+
+  // Handle time range changes for current view type
+  const setTimeRange = (newTimeRange) => {
+    setTimeRanges(prev => ({
+      ...prev,
+      [viewType]: newTimeRange
+    }));
+  };
 
   // Handle view type changes with automatic time range adjustment
   const handleViewTypeChange = (newViewType) => {
     setViewType(newViewType);
-    // If switching to daily view and currently on 24h, switch to 7d
-    if (newViewType === 'daily' && timeRange === '24h') {
-      setTimeRange('7d');
+    // If switching to daily view and its current time range is 24h, switch to 7d
+    if (newViewType === 'daily' && timeRanges[newViewType] === '24h') {
+      setTimeRanges(prev => ({
+        ...prev,
+        [newViewType]: '7d'
+      }));
     }
   };
 
